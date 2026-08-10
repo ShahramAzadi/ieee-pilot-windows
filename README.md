@@ -1,6 +1,6 @@
 # IEEE PILOT Windows
 
-This repository contains a Windows-compatible build of IEEE PILOT.
+This repository contains a Windows-compatible build of IEEE PILOT 1.12.
 
 This is a Windows port of the original IEEE PILOT project by Eric S. Raymond.
 
@@ -46,4 +46,5 @@ If you do not want to build the source code yourself, you can download the pre-b
 The release package contains:
 
 pilot.exe — IEEE PILOT interpreter
+
 pilotconv.exe — PILOT converter
