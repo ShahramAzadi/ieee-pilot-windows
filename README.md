@@ -27,6 +27,7 @@ Build:
 
 ```bash
 make
+```
 
 ## Running on Windows
 
@@ -36,7 +37,7 @@ Example:
 
 ```powershell
 .\pilot.exe .\examples\hello.p
-
+```
 
 Pre-built binaries
 
