@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# 1. Reads the first line of the .tst file. If it starts with # for , it strips that prefix to
+#    get the PILOT program name; otherwise it uses the line as-is.
+# 2. Runs the PILOT interpreter and feeds it the remaining lines as stdin.
+# 3. Uses the repo’s pilot binary if present, otherwise falls back to pilot on PATH.
+# 4. Runs from the tests directory so relative paths in the header (like ../examples/tutor.p)
+#    work.
+
+# Get and validate the test load argument
+if [ "$#" -ne 1 ]; then
+	echo "usage: testrunner file.tst" >&2
+	exit 2
+fi
+if [ ! -f "$1" ]; then
+	echo "testrunner: can't read $1" >&2
+	exit 1
+fi
+testload="$1"
+
+# Prevent cd from doing anything wacky
+CDPATH= 
+
+# Extract the program name
+header=$(sed -n '1p' "$testload")
+header=${header%$'\r'}
+case "$header" in
+"# for "*)
+    prog=${header#\# for }
+    ;;
+*)
+    echo "$0: malformed header."
+    exit 1
+    ;;
+esac
+if [ -z "$prog" ]; then
+	echo "testrunner: empty program name in $1" >&2
+	exit 1
+fi
+
+# Get oriented - where are we?
+tests_dir=$(cd -- "$(dirname -- "$0" >/dev/null)" && pwd)
+root_dir=$(cd -- "$tests_dir/.." >/dev/null && pwd)
+
+# Where the examples live
+examples=../examples
+
+# Find the Pilot interpreter
+pilot_bin="$root_dir/pilot"
+if [ -x "$pilot_bin" ]; then
+	pilot_cmd="$pilot_bin"
+else
+	pilot_cmd="pilot"
+fi
+
+# Go to the tests directory
+cd "$tests_dir" >/dev/null
+
+# Feed it the test file, sans first line
+tail -n +2 "$testload" | "$pilot_cmd" -e '$ ' "$examples/$prog"
+
+
+exit $?
+
+# end

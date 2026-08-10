@@ -1,0 +1,15 @@
+pilot
+stdconv
+*.o
+*.a
+grammar.c
+lexer.c
+grammar.h
+grammar.output
+*.html
+*.1
+docbook-xsl.css
+pilotconv.c
+pilotconv
+
+*.exe

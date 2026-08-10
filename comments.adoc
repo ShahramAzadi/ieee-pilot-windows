@@ -1,0 +1,326 @@
+= Implementor's Comments on the IEEE PILOT Standard
+by Eric S. Raymond
+November 1991
+
+== Introduction
+
+A language standard ought to be a self-contained and unambiguous
+description of a language, sufficiently complete to enable a competent
+language implementor to write a translator that deals appropriately
+with all code that uses only constructs defined in the standard.
+
+The best test of the completeness and precision of a language standard
+is a pragmatic one.  Can an expert language implementor with no
+experience of the language produce a quality implementation without
+having to either make arbitrary choices or refer to nebulous `existing
+practice'?  If not, then the standard is under-specified or ambiguous.
+The combination of innocence and experience required of the
+implementor to make such a test effective is hard to find, but it
+happens with respect to PILOT that I fill it exactly.
+
+I first considered writing a PILOT interpreter less than a month ago,
+while talking with Dick Karpinski at Hackers 7.0 in October 1991.
+Though I am expert with YACC and LEX and the author of several
+compilers and special-purpose control languages, I had barely even
+heard of PILOT, and have never programmed on any existing implementation.
+
+I have now completed an implementation of a PILOT interpreter meeting
+the letter of IEEE Standard 1154-1991 <<1>>.  I have also written, to
+test it, a large PILOT program which tutors users on the PILOT
+language.  Though I undertook the job basically as an interesting
+three or four-day hack, the process has raised some issues of which (I
+feel) the PILOT standards committee and community ought to take formal
+notice.
+
+In brief, the Standard is seriously under-specified, poorly organized,
+ambiguous in some spots, buggy in others, and in serious need of
+revision.  Specifics follow.
+
+== Lexical Specification Problems
+
+There is a whole cluster of problems arising from poorly specified
+lexical rules that could have been avoided with a very little extra
+language.
+
+The <char> production is misleading.  It should read "...any ASCII
+character other than a newline...".  As written, it looks like strings
+never terminate.  The fact that statements are terminated by newline
+is never made explicit; even if it were, the application to string
+termination is hard to see.
+
+Under the <statement> production, it says "Whitespace between elements
+is ignored", but in some cases near strings it is unclear what an
+"element" is.  To take two important cases:
+
+* In the <text> production, it is not obvious whether text
+is interpreted as a token stream or as characters 
+including whitespace.
+
+* It is also not obvious whether whitespace after a ':' is
+elided from a trailing text element.
+
+Practice in existing implementations is to treat <text> as a stream of
+characters.  This creates a serious lexical problem with regard to the
+boundaries of embedded identifiers.  For example, the text
+
+--------------------
+	"sample $var sample"
+--------------------
+
+might be interpreted as any of
+
+--------------------
+	"sample " $v "ar sample"
+	"sample " $va "r sample"
+	"sample " $var " sample"
+--------------------
+
+Common sense would favor the last (whitespace-bounded) parse, but the
+Standard does not even express or even imply a rule on the matter.  
+The problem is even nastier with postfix-$ string identifiers.  The text
+
+--------------------
+	"sample var$ sample"
+--------------------
+
+may be interpreted as any of
+
+--------------------
+	"sample va" r$ " sample"
+	"sample v" ar$ " sample"
+	"sample " var$ " sample"
+--------------------
+
+and again the Standard gives no guidance.  It would not be responsive
+to argue that the whitespace-bounded (third) interpretation is
+`obviously' correct; because there is another rule which compilcates
+the picture.
+
+The <limited-string> rule limits identifiers to 10 characters.  How,
+then, do we parse "sample $abcdefghijk sample"?  Is this
+
+--------------------
+	"sample " $abcdefghij "k sample"
+--------------------
+
+or does it raise a syntax error?  The Standard does not specify.
+
+In TYPE, MATCH, REMARK, FILE, GRAPHIC, YES and NO, the lexical rules do not
+permit us to distinguish between a missing and a null text argument.
+The BNF is thus unnecessarily complicated; it should specify <text>
+rather than {<text>} in all cases, and note that <text> may be empty.
+
+== BNF problems
+
+There are also miscellaneous technical problems arising from
+misleading BNF usage and the sketchiness of the annotations.
+
+Syntactic elements in the BNF are not consistently surrounded by <>.
+This irregularity makes it harder to read.
+
+Handling of case is inconsistent.  2.2 states that case is
+insignificant, but the <condition> production confuses the issue by
+giving keyword alternatives in both cases.
+
+The productions for the Y and N commands do more to conceal than
+reveal what's really going on.  Better to have simply specified that
+an elided keyword before Y or N is treated as `type'.
+
+The BNF production for the <condition> part is bizarre and misleading,
+especially the part reading
+
+--------------------
+	if condition has <rel_exp>
+		then if %satisfied
+			then %satisfied		<< %relation
+--------------------
+
+I am informed that this is intended to suggest `short circuit'
+evaluation of conditions like
+
+--------------------
+	t y (#foo > 3) : stuff
+--------------------
+
+so that if %answer contains "stuff" the condition (#foo > 3) need not
+be evaluated.  However, since IEEE PILOT has no side effects in
+expressions, this should not be a consideration.  In any case, the
+annotation
+
+--------------------
+	if condition has 'y' or 'Y'
+		then %satisfied		<< %matched
+	else if condition has 'n' or 'N'
+		then %satisfied		<< not %matched
+	else if condition has <rel_exp>
+		then %satisfied		<< %relation
+--------------------
+
+expresses the same semantics more clearly (note the presence of the
+second else).
+== Semantic underspecification problems with Std 1154-1991
+
+The semantics of the YES and NO statements are inadequately specified.
+The cryptic references "same as ty" and "same as tn" seem intended to
+convey that Y and N act like T statements with preset Y and N
+conditions, but this needs to be made clearer -- and not just as a
+last sentence in 4.6, which is about a different feature!
+
+In the ACCEPT production, it looks semantically as though the
+<identifier> must be a string ID, because it says the identifier is
+assigned %answer which is type string.  However, I am told it is
+traditional to do an implicit conversion to a number when the
+identifier is of numeric type, ignoring embedded commas.  The Standard
+does not mention this.
+
+Also under ACCEPT, it is not clear whether or not the value of %text
+afterwards includes the trailing newline.
+
+The Standard fails to specify whether an attempt to access a variable
+not yet assigned is an error.  Assuming it is not, it fails to specify
+the initial value of variables.
+
+The description of `match' fails to specify whether '*' prefers the
+longest or the shortest possible match; also whether "*" matches the
+null string.  That is, in matching an argument of "b*a" against an
+%answer of "xbaaacx" it is not clear whether %matched should be "b",
+"`ba" or "baa".
+
+The description of `match' fails to specify whether whitespace is
+literal or fluid in a match pattern (that is, whether by default all
+runs of whitespace are treated as equivalent for matching purposes).
+
+The description of `match' fails to specify whether, in a pattern with
+multiple or-barred alternatives, %right and %left are excavated from
+the entire pattern or just the alternative in which the match was found.
+
+Some existing program text implies that whitespace occurring in match
+patterns after any of the or-bar characters is ignored.  The Standard
+does not address this.
+
+There is no unary minus; hence, no negative numeric constants.  But
+just such a constant is referenced in the explanation of the <mulop>
+production!
+
+The Standard is vague on the subject of what a `valid label is; in
+particular it does not specify whether or not labels may be
+forward-referenced.
+
+The Standard fails to mention a major feature of existing practice,
+one used by every program in <<2>>; colon continuation.  Dick Karpinski
+informs me that the new line continuation syntax proposed in 4.6 is
+intended to replace this feature.  However, this would clearly be a
+major mistake.  Even if it did not break nearly the entire corpus of
+existing programs (including the language designer's own tutorial
+examples!), the new syntax invites bizarre errors if any leading part
+of a wrapped line resembles a keyword.
+
+Finally, and most seriously, there is the complete lack of
+any semantic description of the FILE or GRAPHICS commands.  That two
+of the keywords described as `core language elements' have completely
+unspecified actions is nothing less than disgraceful.  If no semantics
+could be agreed on, they should not have been included in the required
+core set.
+
+== Other problems with the Standard
+
+The Language Extensions section fights existing practice too hard.
+The egregious problems with 4.6 have already been noted.  Why the WAIT
+name is specified for timed delay when practice and <<2>> seem to favor
+PAUSE is not clear.  Nor does the suggestion of `\' as a modulo
+operator in 4.10 recommend itself over the % used in <<2>>.  It's
+already loaded as the string escape character.
+
+The abjuration that a keyword-expansion program `should be provided'
+is duplicated on page 8 and 14.  This bespeaks sloppy editing.
+Moreover it is not clear what it means nor why it's important.  The
+passive voice nimbly evades the question of who is to do the providing.
+
+No personal names are given in the history section, which is odd
+considering the amount of space devoted to it.  This gives the whole a
+dry, bureaucratic tone and suppresses at least one important fact.
+Surely it is of some interest to readers that the inventor of the
+language now chairs the group that produced the Standard?
+
+What is the historical remark in 4.5 doing in a section supposedly
+about language extensions?
+
+The presence of two loose pages of corrections is not reassuring.
+
+== Recommendations for Change
+
+The Standard's unhappy combination of serious underspecification and
+numerous small technical problems adds up to an embarrassing whole,
+creating the impression of a sloppy and amateurish job done by a group
+of people too close to the language to notice that they've left out
+key details.  I would not want my name associated with the document as
+it now stands, and submit that it requires immediate and serious revision.
+
+The three most conspicuous problems with the Standard as it now exists
+are (1) the ambiguities in the lexical rules, and (2) the gaping void
+where semantic specification of FILE and GRAPHIC ought to be.  Also,
+(3) the omission of colon continuation creates major difficulties for
+almost all existing code, and the 4.6 proposal to replace it is an
+unmitigated disaster which should be scrapped.
+
+The specific changes I most urgently recommend are, accordingly:
+
+* Addition of a `Lexical Rules' section to the Standard.  It need not be
+terribly complicated; but it should say things like "whitespace is
+ignored except in <text> arguments, e.g. following the colon in a
+statement with text arguments or following the equals character in an
+assignment to a string identifier" and "case is ignored everywhere in
+the language, but preserved on output of text data".
+
+* FILE and GRAPHICS should either be specified or dropped from the core
+statements list.
+
+* Colon continuation should be supported.  The proposed 4.6 replacement
+should be dropped.
+
+There is much more that ought to be done, including the following:
+
+* The BNF needs to be rewritten more carefully. The command productions
+ought to be interlineated with paragraph-length descriptions of what
+the command is expected to do.
+
+* The postfix-$ form for string identifiers allowed in 3.1 (correction
+sheet, page 13) should be dropped.  It creates too many lexical
+ambiguities.
+
+* Is it really necessary to have _three_ different equivalent
+alternation operators for string matching?  A reasonable design would
+pick one and toss the other two.
+
+In testing the interpreter against the programs from <<2>>, I learned
+quite a bit about existing practice and idioms.  The language of the
+Standard should not break as many of these as it does.
+I believe serious consideration ought to be given to:
+
+* Admitting CH, CA, and PAUSE to the Standard, with the proviso that
+CH can be a no-op and CA raise an error when PILOT is run on a display
+that does not have the relevant features.
+
+* Permitting the leading * to be elided from JUMP and USE label arguments.
+
+* Allowing a conforming implementation to ignore leading whitespace (after the
+colon) in a text part.
+
+== Bibliography
+
+[bibliography]
+
+- [[[1]]] "IEEE Standard for Programmed Inquiry, Learning Or Teaching (PILOT)"
+ISBN 1-55937-151-X, dated August 22 1991.
+
+- [[[2]]] "A User's Guide To Pilot" by John A. Starkweather, Ph.D.
+Prentice-Hall, Inc., Englewood Cliffs, NJ 1985.
+
+== 2026 Postscript
+
+The standard was published on 1991-08-22 and approved as IEEE
+1154-1991 on 1991-12-18. https://standards.ieee.org/ieee/1154/1738/[(Reference)]
+
+The standard was withdrawn on 2000-03-06.
+
+// end

@@ -1,0 +1,55 @@
+= PILOT RELEASE NEWS =
+
+1.12: 2026-02-27::
+	Code hardened with assistance from ChatGPT-5.2
+	Adds -L option for generating test logs.
+	Documentation fully spellchecked.
+	Fix bug in handling of TY/TN continuations.
+	More programs in the chrestomathy.
+
+1.11: 2024-02-06::
+	1996 was a long time ago, port to more modern C.
+	The mm documents have been moved to asciidoc.
+	Error messages are now in modern gcc format.
+
+1.10: 2019-06-12::
+	Documentation polishing.
+	Prevent a theoretically impossible pair of buffer overruns.
+
+1.9: 2016-09-26::
+	Forward-port to modern C, Bison, and Flex by Frank J. Lhota.
+	Rename stdconv to pilotconv for namespace politeness.
+
+1.8: 1996-10-07::
+	In pedantic mode, cough and die on nonstandard constructs instead
+	of trying to recover.  Recovery wouldn't have worked anyway and
+	this made the parser much faster.
+
+1.7: 1994-09-16::
+	Fixed core-dump bug by making the input text buffer larger.
+
+1.6: 1994-09-14::
+	ANSI-ized the code; no more -DBSD or -DATT
+	Fixed bug in compiler label generation.
+	Fixes in tutorial.
+	Fixed processing of in-line comment syntax.
+
+1.5: 1993-11-07::
+	Cleanup for PTF release.
+
+1.4: 1992-05-28::
+	Numerous minor documentation fixes.
+	Tour document added.
+
+1.3: 1992-05-19::
+	CA,CL,CE support, with optional device-independent I/O via termcap(3).
+	Enhancements and minor fixes to tutorial.
+	JM is implemented.
+	The PROBLEM abbreviation is now PR as in Nevada PILOT.
+
+1.2: 1991-12-10::
+	WAIT keyword changed to PAUSE.
+	Added stdconv utility.
+
+1.1: 1991-11-17::
+	Initial release.

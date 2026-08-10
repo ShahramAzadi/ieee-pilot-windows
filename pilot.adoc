@@ -1,0 +1,308 @@
+= pilot(1) =
+:doctype: manpage
+
+== NAME ==
+pilot - interpreter and compiler for IEEE Std 1154-1991 PILOT
+
+== SYNOPSIS ==
+pilot [-dcmpk] [-L logfile] [-v num[y]] [files...]
+
+== DESCRIPTION ==
+This program is an interpreter/compiler for IEEE PILOT.  Details of the
+language may be found in the written standard.  This interpreter
+supports the core language plus certain proposed extensions, as
+detailed below.  The purpose of this interpreter is to serve as a
+reference implementation of the IEEE PILOT language for users wishing
+to check standards conformance of PILOT programs and other
+implementations.  The source distribution also provides portable model
+C code for standards-conforming implementations.
+
+Four options control the behavior of pilot.  The -v option controls
+the parser/lexer's verbosity.  Verbosity level 1 echoes each line to
+stderr just before it is processed (for better context on errors).
+Level 2 reports on each token found by the lexer.  If your PILOT was
+generated with YACC supporting the -t option, suffixing a level
+with "y" causes the parser to report on the actions it is taking to
+parse each PILOT statement. The -d option causes all relevant system
+variables to be dumped after each statement.  The -m option suppresses
+the normal exit on syntax error. The -p (pedantic) option forces
+strict IEEE conformance.
+
+These options may also be set by a line beginning with # embedded
+in program text.  Thus, for example, "#-v2y" enables lexer reporting
+and parser reporting.  You may switch off options by prefixing them
+with "+".  Thus, "#+y" would turn off grammar reporting.  This # feature
+is disabled if the -p option is on.
+
+The -c option causes PILOT to compile each argument file named to
+executable object code; this option cannot be given on a # line.
+PILOT source files must have a .p extension.  This is actually
+accomplished by generating C code from the PILOT source and compiling
+the C; if you want to get a look at the translation, the -k option
+is available to prevent the .c file from being delated.
+
+An additional option, -L, takes a logfile name. With this option, all
+input to The program is recorded there, The file is supplied with a
+header line that begins "# for " and records the name of the
+program. This is inended to be used for generating regression-test
+loads.
+
+== IMPLEMENTATION CHOICES ==
+The IEEE standard for PILOT is underspecified in some important
+respects.  Thus, an implementor has to make choices about how to
+resolve ambiguities.  The choices made in this reference
+implementation are detailed here.  Paragraph numbers reference the
+relevant section of the Standard.
+
+2.3: The Standard does not specify whether or not ACCEPT strips the
+line terminator from input before copying it to %answer.  This
+implementation performs the stripping.
+
+2.3: In an ACCEPT statement with a numeric ID, the Standard does not
+specify how the contents of %answer is to be interpreted as a number.
+In this implementation, a leading string of decimal digits is
+interpreted as a number.
+
+2.3: The Standard does not specify what a "valid" label is.
+Forward-referencing of labels is permitted.  That is, a jump to a
+label may occur before the declaration of the label.
+
+2.3: When looking for IDs embedded in <text>, this implementation
+considers them to be lexically bounded by any non-<limited-string>
+character, choosing the longest match.  Thus, the text "foo$bar,baz"
+is parsed as "foo" $bar ",baz", rather than "foo" $ba "r ,baz" or any
+others of the alternatives permitted by the Standard.
+
+2.3: Each <text> part is treated as a character stream and not
+tokenized; all whitespace after the colon or : introducing it is
+significant.
+
+2.3: The text "abc$def" is resolved as the string identifier abc$
+followed by the literal "def"; that is, postfix $ is considered the
+preferred marker for a string identifier where there is ambiguity.
+
+2.3: The * wildcard in the MATCH statement prefers the shortest
+match.  Thus, if "b*a" is matched against "foobaaaz", %matched will
+be "ba", not "baa".
+
+Whitespace after alternation characters in match patterns is skipped.
+The Standard is silent on this, and the Standard's lexical rules are
+not sufficiently precise to exclude it; it follows pre-existing practice.
+
+2.3: The actions of the FILE and GRAPHICS core language statements are not
+defined.  In this implementation, they produce a warning message.
+
+The initial value of a numeric variable is 0.  The initial value of a
+string variable is the empty string (some existing implementations
+make it the string form of the variable's name, without $).
+
+== PILOT EXTENSIONS ==
+Section numbers below reference paragraphs in the official correction
+sheet for the Standard.
+
+4.1: The *PAUSE* extended command is implemented.  The syntax is:
+
+	{<label>} PAUSE <condition> : <expression>
+
+PAUSE may be abbreviated PA, as in Nevada and Atari PILOT.  The
+semantics is that if <condition>, which is a normal condition-part, is
+satisfied, the interpreter sleeps for <expression> seconds.  Use of
+PAUSE will raise an error if the -p option is on.
+
+4.1: The *LINK* extended command is implemented.  The syntax is:
+
+	{<label>} LINK <condition> : <text>
+
+LINK may be abbreviated L, as in Apple PILOT.  The semantics is that
+if <condition>, which is a normal condition-part, is satisfied, the
+interpreter interprets the text part as a filename, and executes that
+file as a PILOT program as though it had been inserted, replacing the
+LINK statement.  However, you may not JUMP or USE from a LINKed file
+to the containing one, or vice-versa.  Use of LINK will raise an error
+if the -p option is on.
+
+In compiled programs, LINK looks first for a binary in the in current
+directory, then for an interpretable source in the current directory,
+then for a binary in the PILOT library directory, finally for an
+interpretable source in the PILOT library directory; the sys_status
+variable is set to -1 if it finds none of these, otherwise to the
+return status of the binary or the PILOT interpreter called on the
+source.
+
+In interpreted PILOT, when you call another PILOT program with LINK,
+any variables set in the 'outer' PILOT program are also set for the
+'inner' one; in effect, the text of the called program is inserted at
+the point of the LINK.  A compiled program neither makes its variables
+available to a program it calls nor picks up variables from a calling
+program.
+
+4.1: The *TYPEHANG* extended command is implemented.  The syntax is:
+
+	{<label>} TYPEHANG <condition> : <text>
+
+TYPEHANG may be abbreviated TH, as in Nevada and Apple PILOT.  The
+semantics is that if <condition>, which is a normal condition-part, is
+satisfied, the program writes the contents of %text to standard output
+with no terminating linefeed.  Use of TYPEHANG will raise an error if
+the -p option is on.
+
+4.1: A new command, *SYSTEM*, is supported.  The syntax is:
+
+	{<label>} SYSTEM <condition> : <text>
+
+SYSTEM may be abbreviated XS, as in Nevada PILOT.  The semantics is
+that if <condition>, which is a normal condition-part, is satisfied,
+the program sends the text part to the underlying operating system
+shell as a command.  A new system variable, %status, holds the integer
+status (if any) returned by the command; typically, a return of 0
+means the command executed normally while other values indicate
+errors.  Use of SYSTEM will raise an error if the -p option is on.
+
+4.1: The *CLEARHOME* extended command is implemented.  The syntax is:
+
+	{<label>} CLEARHOME <condition> :
+
+CLEARHOME may be abbreviated CH, as in Nevada PILOT.  The semantics is
+that if <condition>, which is a normal condition-part, is satisfied,
+the program attempts to clear the output terminal screen and home the
+cursor.  Under UNIX this is done via the termcap(3) libraries; on
+non-UNIX systems it is implemented by sending a form feed to standard
+output.  This feature is disabled when the -p option is on.
+
+4.1: The *CURSADDR* extended command is implemented.  The syntax is:
+
+	{<label>} CURSADDR <condition> : <row>, <column>
+
+CURSADDR may be abbreviated CA, as in Nevada PILOT.  The semantics is
+that if <condition>, which is a normal condition-part, is satisfied,
+the program attempts to position the screen cursor to the given row
+and column (both must by integer constants).  Under UNIX this is done
+via the termcap(3) libraries; on non-UNIX systems it is implemented by
+sending an ANSI cursor-positioning sequence to stdout.  This feature
+is disabled when the -p option is on.
+
+4.7 Intraline comments with // are supported.  Note that in order to
+use a // in a <text>, you must escape the first character thus: \\//.
+This feature is disabled when the -p option is on.
+
+4.8 All system variables named in the Standard are defined as
+read-only variables in this implementation: that is, %expression,
+%term, %factor, %nextstmt, %uselevel, %maxuses, %answer, %matched,
+%left, %match, %right, %satisfied, %relation, %text.  There are, as
+described, variables %return1, %return2 etc.  This feature is disabled
+when the -p option is on.
+
+The Standard does not specify the true/false values of %matched,
+%satisfied, and %relation; we use 0 for false, 1 for true on the
+latter two.  The value of %matched is 0 if no match was found;
+otherwise, it is the number of the alternation matched counting from
+the left.
+
+4.9: The special pseudo-labels @P, @A, and @M are supported.  This
+feature is disabled when the -p option is on.  The PROBLEM statement
+behaves like a REMARK.
+
+4.10 The 'modulo' binary operator is supported, as a multiplicative
+operator written `%' (to conform with existing implementations).
+This feature is disabled when the -p option is on.
+
+Unary minus is permitted in expressions to specify a negative numeric
+constant or negate a subexpression.  This feature is disabled when the
+-p option is on.
+
+If the 'pedantic' switch (-p) is off, the leading "*" may be omitted
+from the target label in JUMP and USE statements.  This violates the
+Standard but is permitted in other PILOTs.
+
+A new escape syntax for embedding nonprintable ASCII characters in
+text is supported.  Escapes are as follows:
+
+|===============================================================
+| \b    |  backspace
+| \t	|  tab
+| \n	|  line feed
+| \r	|  carriage return
+| \a	|  bell
+| \xdd	|  (for d two hex digits) 
+| \^	|  masks following char by 0x1f (thus \^c is control-C).
+|===============================================================
+
+In addition, \\ preceding a carriage return neutralizes it as a line
+terminator, permitting a logical line to span multiple physical lines.
+This feature is disabled when the -p option is on.
+
+The *CLEARLINE* extended command is implemented.  The syntax is:
+
+	{<label>} CLEARLINE <condition> :
+
+CLEARLINE may be abbreviated CL, as in Nevada PILOT.  The semantics is
+that if <condition>, which is a normal condition-part, is satisfied,
+the program attempts to clear to end of line.  Under UNIX this is done
+via the termcap(3) libraries; on non-UNIX systems it is by sending an
+ANSI escape sequence to standard output.  This feature is disabled
+when the -p option is on.
+
+The *CLEAREND* extended command is implemented.  The syntax is:
+
+	{<label>} CLEAREND <condition> :
+
+CLEAREND may be abbreviated CE, as in Nevada PILOT.  The semantics is
+that if <condition>, which is a normal condition-part, is satisfied,
+the program attempts to clear to end of screen.  Under UNIX this is
+done via the termcap(3) libraries; on non-UNIX systems it is
+implemented by sending an ANSI escape sequence to standard output.
+This feature is disabled when the -p option is on.
+
+The *JUMPMATCH* statement is implemented.  The syntax is:
+
+	{<label>} JUMPMATCH <condition> : lab1, lab2, ... labn
+
+JUMPMATCH may be abbreviated JM, as in Nevada and Atari PILOT.  The
+semantics is that if <condition>, which is a normal condition-part, is
+satisfied, the program looks at the %matched value from the last
+MATCH.  If the value is zero (no match) the statement is ignored.  If
+the value is k > 0, the kth label in the list is JUMPed to.  If k is
+greater than the number of labels in the list, the statement is ignored.
+
+The END statement allows a numeric expression argument, which is
+passed back as the interpreter's return status.  This feature is
+disabled when the -p option is on.
+
+== CONVENIENCE FEATURES ==
+A "?" typed at the beginning of a line prints out a brief interactive
+help message.  This feature is disabled when the -p option is on.
+
+A "!" typed at the beginning of a line escapes the remainder of the
+line to the underlying shell.  This feature is disabled when the -p
+option is on.
+
+The command-continuation feature of some pre-IEEE PILOTs is supported.
+That is, an elided keyword-condition part repeats the last one.  This
+feature is disabled when the -p option is on.
+
+== RETURN VALUES ==
+0 for successful execution, 1 for errors while compiling or executing.
+This may be overridden by the argument to an END.
+
+== ENVIRONMENT VARIABLES ==
+PILOTDIR sets the location of the PILOT library directory.
+
+== BUGS ==
+The language design is appallingly ugly to begin with, and the 1991 IEEE
+standard has numerous syntactic and semantic holes.  See the
+Implementor's Comments on the IEEE PILOT Standard
+
+== AUTHOR ==
+Eric S. Raymond <esr@snark.thyrsus.com>, November 1991. 
+
+== SEE ALSO ==
+IEEE Standard 1154-1991: 
+'IEEE Standard for Programmed Inquiry, Learning Or Teaching (PILOT)'
+ISBN 1-55937-151-X, dated August 22 1991.
+
+Correction Sheet, pages 13-15, dated September 23 1991.
+
+'Implementor's Comments on the IEEE PILOT Standard'
+by Eric S. Raymond (included with the source distribution).
+
+//end

@@ -1,0 +1,41 @@
+= IEEE-Pilot
+
+This is the README file for the reference implementation of IEEE
+PILOT by Eric S. Raymond <esr@thyrsus.com>.
+
+Example PILOT programs are included in the examples/ directory.
+They're used for a regression test that you can run with "make check".
+
+It will be helpful to have handy a copy of the IEEE Standard for
+Programmed Inquiry, Learning, Or Teaching (PILOT).  This is IEEE Std
+1154-1991, ISBN 1-55937-151-X.  Be sure you also get the two loose
+pages of corrections. Note: The standard was withdrawn in 2000 and
+may thus be difficult to find.
+
+The distribution includes an interactive tutorial program written in
+PILOT that will help you learn PILOT.  It is examples/tutor.p; to run
+it, 'make pilot' and run `./pilot examples/tutor'.
+
+For help on porting this PILOT implementation to other environments, see
+"A Brief Tour of the PILOT Internals", included with this distribution.
+
+== AUTHOR'S DISCLAIMER
+
+Don't blame me for the language design; I think it's wretched, too,
+and I only did this implementation for the hack value.
+
+The project logo is an image of a small part from a Lionel train
+set, colloquially known as a 'cowcatcher' but formally a 'pilot'.
+
+No warranty express or implied, etc, etc.  It runs the conforming
+examples the IEEE 1154 working group sent me and the tutorial I wrote
+for it.  That's all.
+
+Have fun with this, or something...
+
+== PACKAGES
+
+This code is packaged as "ieee-pilot".
+
+image:https://repology.org/badge/vertical-allrepos/ieee-pilot.svg[Repology
+package status]

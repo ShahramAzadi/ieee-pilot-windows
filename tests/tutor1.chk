@@ -1,0 +1,463 @@
+[H[2JWelcome to the IEEE PILOT tutorial program.
+
+  This program will help you learn how to program in IEEE PILOT.  It is
+arranged in topic sections which you can can browse through in whatever
+order suits your skills and interests.  To learn the whole language, just
+read them straight through like chapters and sections in a book.
+
+  Experienced PILOT users should have a look at main sections E, F, and G
+(Special Features, Debugging PILOT programs, and Compiling PILOT) to learn
+particulars of PILOT use with this implementation.  Wizards and hackers
+who've somehow tripped over this questionable achievement should read
+section B (PILOT from the Inside) first.
+
+  This tutorial and this implementation of the PILOT language were written,
+purely for their hack value, by Eric S. Raymond <esr@snark.thyrsus.com>
+working from IEEE Standard 1154-1991; formally, IEEE Standard for Programmed
+Inquiry, Learning Or Teaching (PILOT) ISBN 1-55937-151-X, dated August 22
+1991.  It is distributed under BSD terms.
+
+Press enter for more...$ 
+[H[2J
+Please select a topic:
+
+  A - PILOT from the Outside        --- an introduction for non-techies.
+  B - PILOT from the Inside         --- an introduction for techies.
+  C - Elementary PILOT              --- T:, A:, M:, Y:, N: and R:.
+  D - Advanced PILOT programming.   --- C:, conditionals, J:, U: and E:.
+  E - Screen Control                --- CA:, CH:, CL:, CE:.
+  F - Special Features              --- PR:, PA:, L: JM:, TH:, XS:.
+  G - Debugging PILOT programs      --- error messages and debug switches.
+  H - Compiling PILOT               --- how to make PILOT programs faster.
+
+  X - Exit (leave this tutorial)
+
+Type <letter> or to go to a topic (for example, type `a' to go to the first
+Introduction, or `c' to learn about elementary PILOT programming).
+
+Topic? $ a
+
+[H[2JThis is the non-technical introduction to PILOT.
+
+  Welcome to PILOT (Programmed Inquiry, Learning, or Teaching).  The PILOT
+language is designed for writing interactive courseware.  Its great virtue
+is that can be learned quickly and easily;  by actual test, educators and
+other non-techies can learn how to use PILOT effectively in less than an
+hour.
+
+  Typical PILOT programs display information to the user, ask a question,
+look at the response in various ways, and use the response to determine
+which information should be shown next.  This PILOT program that you're
+running now, to learn PILOT, is very typical.
+
+  This program will take you through a series of sections designed to
+teach you about PILOT and how to program in it.  Some of the sections
+have exercises in them so you can test your knowledge.  When you have
+finished the tutorial, you can read the PILOT source for this program
+(tutor.p) to learn "idioms", useful ways of doing common small tasks.
+
+Press enter to continue...$ 
+[H[2J
+Please select a topic:
+
+  A - PILOT from the Outside        --- an introduction for non-techies.
+  B - PILOT from the Inside         --- an introduction for techies.
+  C - Elementary PILOT              --- T:, A:, M:, Y:, N: and R:.
+  D - Advanced PILOT programming.   --- C:, conditionals, J:, U: and E:.
+  E - Screen Control                --- CA:, CH:, CL:, CE:.
+  F - Special Features              --- PR:, PA:, L: JM:, TH:, XS:.
+  G - Debugging PILOT programs      --- error messages and debug switches.
+  H - Compiling PILOT               --- how to make PILOT programs faster.
+
+  X - Exit (leave this tutorial)
+
+Type <letter> or to go to a topic (for example, type `a' to go to the first
+Introduction, or `c' to learn about elementary PILOT programming).
+
+Topic? $ b
+
+[H[2JThis is the hacker's introduction to PILOT.
+
+  Yes, PILOT is a simple language; the uncharitable might even call it
+simple-minded, but it wasn't designed for hacking and it *was* designed in
+1962.  It's served its purpose well enough to survive for thirty years,
+which is more than a lot of grander but now-defunct languages can say.
+
+  PILOT is something like BASIC and something like a really, really dimwit
+cousin of Bourne Shell.  The core language has only ten commands, two of
+which are trivial variants of a third, and doesn't include file I/O.  There
+are no named functions, only equivalents of GOTO and GOSUB.  The only two
+data types are integer and string.  The arithmetic syntax resembles BASIC's.
+The only string operations are assignment, concatenation, and a sort of weak
+regular-expression match which you can only apply to user input.  Coding
+in PILOT is tedious and limiting, but within its limits it *is* dead easy.
+
+  The only tricky thing about PILOT is its lexical rules, which are bizarre
+by modern standards.  Like most other languages of its antiquity, it is
+basically field-oriented rather than token-oriented.  But you won't find it
+difficult.  Read on, holding your nose if necessary.
+
+Press enter for more...$ 
+[H[2JHere's a rough BNF of the core commands:
+
+TYPE    <cond> : <text>        -- type <text> followed by newline.
+ACCEPT  <cond> : {<id>}        -- accept input to %answer {assign to id}.
+MATCH   <cond> : <text>        -- set %matched, %left, %matched, and 
+                                  %right if <text> can be found in %answer
+JUMP    <cond> : <label>       -- jump to <label>.
+USE     <cond> : <label>       -- jump to <label>, preparing to return on E.
+COMPUTE <cond> : <id> = <expr> -- give <id> the value computed by <expr>.
+REMARK  <cond> : <text>        -- no effect.
+END     <cond> :               -- exit from current U.
+YES     <cond> : <text>        -- display <text> if %matched is TRUE.
+NO      <cond> : <text>        -- display <text> if %matched is FALSE
+
+  The lexical complexities are mainly in the <text> elements, which are --
+get this -- strings delimited on the left by the colon and on the right by
+newline.  In the C statement, <expr> may be a <text> if <id> is a string ID.
+Also, the keywords may be abbreviated to their first letters, and it is not
+always lucidly clear where the keyword stops and the condition-part begins.
+
+  The condition-parts are arithmetic and relational expressions with two
+special read-only variables optionally present.  More about that later on.
+
+Press enter to continue...$ 
+[H[2J
+Please select a topic:
+
+  A - PILOT from the Outside        --- an introduction for non-techies.
+  B - PILOT from the Inside         --- an introduction for techies.
+  C - Elementary PILOT              --- T:, A:, M:, Y:, N: and R:.
+  D - Advanced PILOT programming.   --- C:, conditionals, J:, U: and E:.
+  E - Screen Control                --- CA:, CH:, CL:, CE:.
+  F - Special Features              --- PR:, PA:, L: JM:, TH:, XS:.
+  G - Debugging PILOT programs      --- error messages and debug switches.
+  H - Compiling PILOT               --- how to make PILOT programs faster.
+
+  X - Exit (leave this tutorial)
+
+Type <letter> or to go to a topic (for example, type `a' to go to the first
+Introduction, or `c' to learn about elementary PILOT programming).
+
+Topic? $ c
+
+[H[2JThis is the section on elementary PILOT programming.
+
+  S      - PILOT statements
+  T      - The TYPE command
+  A      - The ACCEPT command
+  M      - The MATCH command
+  Y or N - The YES command
+  R      - The REMARK command
+
+  Please pick a command to learn about by typing its letter,
+or type `x' to return to the main menu.
+
+Topic? $ s
+
+[H[2JPilot statement syntax.
+
+ Every PILOT statement has a colon in the middle and contains up to three
+parts; a keyword, a condition, and arguments.  The keyword and condition go
+before the colon, the arguments after.  Usually, in elementary PILOT, the
+condition part is empty.  So there are only two parts; keyword and
+arguments, separated by a colon.
+
+  The ten core PILOT statements have the keywords TYPE, ACCEPT, MATCH, JUMP,
+USE, COMPUTE, REMARK, YES, NO, END.  You don't have to remember these now;
+you'll learn them as you continue the tutorial.
+
+  Notice that they all have unique first letters.  In fact, you need only
+write the first letter in a keyword field, and PILOT will recognize it.
+Also, PILOT doesn't care about uppercase versus lowercase except in some
+special circumstances we'll get to later.  Thus, you can write `ACCEPT' or
+`accept' or `A' or `a' or `Accept' in a keyword field and PILOT will see
+them all as the keyword ACCEPT.
+
+  Arguments can come in several different flavors, or be omitted entirely
+(that is, there's nothing to the right of the colon).  We'll discuss the
+way PILOT interprets them under individual statements.
+
+Press enter to continue...$ 
+[H[2JThis is the section on elementary PILOT programming.
+
+  S      - PILOT statements
+  T      - The TYPE command
+  A      - The ACCEPT command
+  M      - The MATCH command
+  Y or N - The YES command
+  R      - The REMARK command
+
+  Please pick a command to learn about by typing its letter,
+or type `x' to return to the main menu.
+
+Topic? $ t
+
+[H[2JThe TYPE command displays a string to the user.
+
+  That's all, and it's that simple.  In fact, the sentence above was
+produced by a PILOT command that looks like this:
+
+   T :The TYPE statement displays a string to the user.
+
+In fact, all the messages displayed by this program come from TYPE
+statements.  You can experiment with writing your own; just type T,
+followed by a colon, followed by text, followed by a newline, and
+watch the text echo back at you.
+
+Do you want to experiment with TYPE statements now? $ 
+
+  TYPE statements can also display the contents of string and numeric
+variables.  There is more about string variables in the next frame, which
+describes ACCEPT; you'll learn about numeric variables a bit later.
+
+Press enter to continue...$ 
+[H[2JThis is the section on elementary PILOT programming.
+
+  S      - PILOT statements
+  T      - The TYPE command
+  A      - The ACCEPT command
+  M      - The MATCH command
+  Y or N - The YES command
+  R      - The REMARK command
+
+  Please pick a command to learn about by typing its letter,
+or type `x' to return to the main menu.
+
+Topic? $ m
+
+[H[2JThe MATCH statement is used to look for patterns in input.
+
+  MATCH takes a text argument and looks in %answer for a substring matching
+it.  If such a match is found, the system variable %matched is set to 1;
+if a match is not found, it's set to 0.  Later, other commands can use
+%matched in various ways.
+
+  Suppose %answer (set by a previous A:) has the value "foozle".  Then
+
+     M:foo
+     M:o
+     M:ZL
+
+would all set %matched to 1.  PILOT doesn't care about uppercase versus
+lowercase in matches, so "ZL" would match the "zl" in "foozle" (so would
+"zL" or "Zl").
+
+Press enter for more...$ 
+[H[2J  On the other hand,
+
+    M:g
+    M:fz
+    M:ooo
+
+would all set %matched to 0, because none of those strings occur in the
+string "foozle" (the value of %answer).
+
+Press enter for more...$ 
+[H[2J  Now, suppose that %answer has the value "YES".  Will the following
+strings match (1) or not match (0) that %answer?  Type 1 or 0 in
+reply to each question.
+
+"y"? $ 1
+That's right.
+"Y"? $ 1
+That's right.
+"n"? $ 0
+That's right.
+"ye"? $ 1
+That's right.
+"es"? $ 0
+No, that string would match "YES"; look again.
+"NO"? $ 0
+That's right.
+"xxx"? $ 0
+That's right.
+
+  This is a significant example, because you often want to ask yes or no
+questions in PILOT programs.
+
+Press enter for more...$ 
+  For examples of MATCH in action, see the next two frames (on YES and NO).
+
+  Some characters (* ? ! | and ,) have special functions in the MATCH
+statement.  Also, MATCH sets three other special variables called %left,
+%match, and %right.  You don't need to worry about any of this yet, except
+to avoid using the special characters in MATCH until you learn what they
+mean.  That will be covered in the Advanced Programming frames.
+
+Press enter to continue...$ 
+[H[2JThis is the section on elementary PILOT programming.
+
+  S      - PILOT statements
+  T      - The TYPE command
+  A      - The ACCEPT command
+  M      - The MATCH command
+  Y or N - The YES command
+  R      - The REMARK command
+
+  Please pick a command to learn about by typing its letter,
+or type `x' to return to the main menu.
+
+Topic? $ y
+
+[H[2JThe YES statement prints a string if the last match succeeded.
+
+  This statement uses the `condition code', %matched, that is set by the
+MATCH statement.  If %matched is 1 (true) when the YES is executed,
+YES displays its argument, the same way a T statement does.
+
+  The NO statement is the opposite of YES; it displays its text argument
+only if %matched is 0.
+
+  This little program illustrates how they work:
+
+    T :Is it usually colder in the summer or in the winter?
+    A :
+    M :winter
+    Y :That's true most places.
+    N :You must be thinking of an unusual place.
+
+Here's what it looks like in action:
+
+Is it usually colder in the summer or in the winter?
+$ 
+You must be thinking of an unusual place.
+
+  Just as with T, string variables named in the text argument of a YES or
+NO have their values plugged in when the text is displayed.
+
+Do you want to experiment with YES and NO statements now? $ n
+[H[2JThis is the section on elementary PILOT programming.
+
+  S      - PILOT statements
+  T      - The TYPE command
+  A      - The ACCEPT command
+  M      - The MATCH command
+  Y or N - The YES command
+  R      - The REMARK command
+
+  Please pick a command to learn about by typing its letter,
+or type `x' to return to the main menu.
+
+Topic? $ r
+
+[H[2J  The REMARK statement is used to add explanatory comments to
+programs.  It has no effect on what the person running the program sees.
+
+  This is more important than it may sound.  Even very simple programs can
+be very confusing for another person to read --- even if that person is the
+program's author six months later!
+
+  The REMARK statement consists of R: followed by any text; everything up to
+the end-of-line is simply ignored.  Here's a sample remark:
+
+    R: If the interpreter tried to parse *this*, it'd choke!
+
+Do you want to experiment with REMARK statements now? $ n
+
+  Note: this implementation of PILOT includes an alternative to REMARK that
+is more flexible and cheaper (less parsing overhead in the interpreter).
+See "Intra-line Comments" in the "Features" section for details.
+
+Do you want to go there now? [H[2JThis is the section on elementary PILOT programming.
+
+  S      - PILOT statements
+  T      - The TYPE command
+  A      - The ACCEPT command
+  M      - The MATCH command
+  Y or N - The YES command
+  R      - The REMARK command
+
+  Please pick a command to learn about by typing its letter,
+or type `x' to return to the main menu.
+
+Topic? $ x
+
+[H[2J
+Please select a topic:
+
+  A - PILOT from the Outside        --- an introduction for non-techies.
+  B - PILOT from the Inside         --- an introduction for techies.
+  C - Elementary PILOT              --- T:, A:, M:, Y:, N: and R:.
+  D - Advanced PILOT programming.   --- C:, conditionals, J:, U: and E:.
+  E - Screen Control                --- CA:, CH:, CL:, CE:.
+  F - Special Features              --- PR:, PA:, L: JM:, TH:, XS:.
+  G - Debugging PILOT programs      --- error messages and debug switches.
+  H - Compiling PILOT               --- how to make PILOT programs faster.
+
+  X - Exit (leave this tutorial)
+
+Type <letter> or to go to a topic (for example, type `a' to go to the first
+Introduction, or `c' to learn about elementary PILOT programming).
+
+Topic? $ d
+
+[H[2JThis is the section on advanced PILOT programming.
+
+  W - Advanced MATCH usage with wildcards
+  C - The COMPUTE command
+  I - Conditional parts
+  J - The JUMP command
+  U - The USE command
+  E - The END command
+  S - String substitution and special escape syntaxes
+
+  X - return to main menu
+
+Topic? $ u
+
+[H[2JThe USE statement is used to enter a subroutine.
+
+  The USE command gives PILOT a rudimentary subroutine facility.  It behaves
+like JUMP, except that the location from which the JUMP was executed is
+saved, and control is returned to the following statement when the next END
+is encountered.
+
+  Here is a sample USE statement:
+
+    USE:*SUMSQUARES
+
+This command would call a routine named USESQUARES.  USE can be abbreviated
+`U' and usually is.
+
+  Each USE executed bumps the value of the system variable %uselevel up by
+1.  The system variable %maxuses gives the maximum number of nested USEs
+the PILOT system will support.  You cannot set %maxuses with a COMPUTE.
+You can set %uselevel, but doing so is likely to result in horrible
+confusion and might even crash PILOT.
+
+Press enter to continue...$ 
+[H[2JThis is the section on advanced PILOT programming.
+
+  W - Advanced MATCH usage with wildcards
+  C - The COMPUTE command
+  I - Conditional parts
+  J - The JUMP command
+  U - The USE command
+  E - The END command
+  S - String substitution and special escape syntaxes
+
+  X - return to main menu
+
+Topic? $ x
+
+[H[2J
+Please select a topic:
+
+  A - PILOT from the Outside        --- an introduction for non-techies.
+  B - PILOT from the Inside         --- an introduction for techies.
+  C - Elementary PILOT              --- T:, A:, M:, Y:, N: and R:.
+  D - Advanced PILOT programming.   --- C:, conditionals, J:, U: and E:.
+  E - Screen Control                --- CA:, CH:, CL:, CE:.
+  F - Special Features              --- PR:, PA:, L: JM:, TH:, XS:.
+  G - Debugging PILOT programs      --- error messages and debug switches.
+  H - Compiling PILOT               --- how to make PILOT programs faster.
+
+  X - Exit (leave this tutorial)
+
+Type <letter> or to go to a topic (for example, type `a' to go to the first
+Introduction, or `c' to learn about elementary PILOT programming).
+
+Topic? $ x
+
+Goodbye.

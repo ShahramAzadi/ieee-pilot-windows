@@ -1,0 +1,45 @@
+= pilotconv(1) =
+:doctype: manpage
+
+== NAME ==
+pilotconv - convert source to IEEE Std 1154-1991 PILOT
+
+== SYNOPSIS ==
+pilotconv
+
+== DESCRIPTION ==
+This program does some conformance checking for IEEE PILOT, and
+attempts to convert source from certain other dialects to be
+compatible with the IEEE reference implementation.
+
+At the moment, the only outright conversion it does is from the
+postfix-$ form of string identifier used in Capitol Pilot to prefix-form.
+
+It also checks for certain nonstandard keywords and complains if
+they're found.  These include: CA: (cursor address), FOOT: (go to foot
+of screen), V: (video), S: (sound), X: (execute indirect), D:
+(dimension) and W: (wait).
+
+The program to be converted and checked is read from standard input,
+and the converted form written to stdout.  Warnings and error messages
+are written to standard error and should be self-explanatory.
+
+== NOTE ==
+For a better (but slower) conformance test, compile the program using
+pilot's -c option.  For a much stricter test, disallowing extensions
+present in the this reference implentation but not described in the
+standard, add the -p (pedantic) option.
+
+== AUTHOR ==
+Eric S. Raymond <esr@snark.thyrsus.com>, November 1991.
+
+==  SEE ALSO ==
+IEEE Standard 1154-1991: 
+'IEEE Standard for Programmed Inquiry, Learning Or Teaching (PILOT)'
+ISBN 1-55937-151-X, dated August 22 1991.
+
+Correction Sheet, pages 13-15, dated September 23 1991.
+
+'Implementor's Comments on the IEEE PILOT Standard'
+by Eric S. Raymond (included with the source distribution).
+

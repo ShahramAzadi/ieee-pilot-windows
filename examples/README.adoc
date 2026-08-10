@@ -1,0 +1,27 @@
+=  Examples
+
+Where the chrestomathy comes from...
+
+These programs were given to me by the IEEE working group:
+
+story.p::	program to generate a silly story from user input
+tea.p::		teaches the art of tea-brewing
+speaknum.p::	translate numbers to English
+goldilocks.p::	another silly-story program, more interactive
+
+I wrote this one:
+
+tutor.p::	interactive tutorial on PILOT
+
+Tese are fromn the TechTinkering website:
+
+loop.p::	bounded-loop demonstration
+fruit.p::	desmonstrate pattern-matching
+
+From atariwiki.org:
+
+hello.p::	Hello, World!
+
+Provenance not recorded:
+
+sysvar.p::	check $term and $expression are defined
